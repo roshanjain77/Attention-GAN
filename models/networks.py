@@ -401,6 +401,7 @@ class ResnetGenerator_our(nn.Module):
     # initializers
 
     attention_model = Attention_Model(64)
+    attention_model.weight_init(0.0, 0.02)
 
     def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
         super(ResnetGenerator_our, self).__init__()
