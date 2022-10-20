@@ -392,6 +392,10 @@ class Attention_Model(nn.Module):
         x = self.deconv3_attention(x)
         return x
 
+    def weight_init(self, mean, std):
+        for m in self._modules:
+            normal_init(self._modules[m], mean, std)
+
 
 class ResnetGenerator_our(nn.Module):
     # initializers
