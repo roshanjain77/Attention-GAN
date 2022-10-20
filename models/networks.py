@@ -400,8 +400,14 @@ class Attention_Model(nn.Module):
 class ResnetGenerator_our(nn.Module):
     # initializers
 
-    attention_model = Attention_Model(64)
-    attention_model.weight_init(0.0, 0.02)
+    attention_model = None
+
+    @classmethod
+    def set_attention_model(cls, ngf):
+        if cls.attention_model is None:
+            cls.attention_model = Attention_Model(ngf)
+            cls.attention_model.weight_init(0.0, 0.02)
+
 
     def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
         super(ResnetGenerator_our, self).__init__()
@@ -447,6 +453,8 @@ class ResnetGenerator_our(nn.Module):
         self.deconv2_content = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
         self.deconv2_norm_content = nn.InstanceNorm2d(ngf)
         self.deconv3_content = nn.Conv2d(ngf, 27, 7, 1, 0)
+
+        self.set_attention_model(ngf)
 
         # self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
         # self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
