@@ -396,7 +396,7 @@ class Attention_Model(nn.Module):
 class ResnetGenerator_our(nn.Module):
     # initializers
 
-    attention_model = None
+    attention_model = Attention_Model(64)
 
     def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
         super(ResnetGenerator_our, self).__init__()
@@ -417,9 +417,6 @@ class ResnetGenerator_our(nn.Module):
             self.resnet_blocks[i].weight_init(0, 0.02)
 
         self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
-
-        if self.attention_model == None:
-            self.attention_model = Attention_Model(ngf)
 
         # self.resnet_blocks1 = resnet_block(256, 3, 1, 1)
         # self.resnet_blocks1.weight_init(0, 0.02)
