@@ -376,8 +376,28 @@ class ResnetGenerator(nn.Module):
         """Standard forward"""
         return self.model(input)
 
+
+class Attention_Model(nn.Module):
+    def __init__(self, ngf) -> None:
+        super(Attention_Model, self).__init__()
+        self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
+        self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
+        self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
+        self.deconv2_norm_attention = nn.InstanceNorm2d(ngf)
+        self.deconv3_attention = nn.Conv2d(ngf, 10, 1, 1, 0)
+    
+    def forward(self, x):
+        x = F.relu(self.deconv1_norm_attention(self.deconv1_attention(x)))
+        x = F.relu(self.deconv2_norm_attention(self.deconv2_attention(x)))
+        x = self.deconv3_attention(x)
+        return x
+
+
 class ResnetGenerator_our(nn.Module):
     # initializers
+
+    attention_model = None
+
     def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
         super(ResnetGenerator_our, self).__init__()
         self.input_nc = input_nc
@@ -397,6 +417,9 @@ class ResnetGenerator_our(nn.Module):
             self.resnet_blocks[i].weight_init(0, 0.02)
 
         self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
+
+        if self.attention_model == None:
+            self.attention_model = Attention_Model(ngf)
 
         # self.resnet_blocks1 = resnet_block(256, 3, 1, 1)
         # self.resnet_blocks1.weight_init(0, 0.02)
@@ -423,11 +446,11 @@ class ResnetGenerator_our(nn.Module):
         self.deconv2_norm_content = nn.InstanceNorm2d(ngf)
         self.deconv3_content = nn.Conv2d(ngf, 27, 7, 1, 0)
 
-        self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
-        self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
-        self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
-        self.deconv2_norm_attention = nn.InstanceNorm2d(ngf)
-        self.deconv3_attention = nn.Conv2d(ngf, 10, 1, 1, 0)
+        # self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
+        # self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
+        # self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
+        # self.deconv2_norm_attention = nn.InstanceNorm2d(ngf)
+        # self.deconv3_attention = nn.Conv2d(ngf, 10, 1, 1, 0)
         
         self.tanh = torch.nn.Tanh()
     # weight_init
@@ -468,11 +491,13 @@ class ResnetGenerator_our(nn.Module):
         image9 = image[:, 24:27, :, :]
         # image10 = image[:, 27:30, :, :]
 
-        x_attention = F.relu(self.deconv1_norm_attention(self.deconv1_attention(x)))
-        x_attention = F.relu(self.deconv2_norm_attention(self.deconv2_attention(x_attention)))
-        # x_attention = F.pad(x_attention, (3, 3, 3, 3), 'reflect')
-        # print(x_attention.size()) [1, 64, 256, 256]
-        attention = self.deconv3_attention(x_attention)
+        # x_attention = F.relu(self.deconv1_norm_attention(self.deconv1_attention(x)))
+        # x_attention = F.relu(self.deconv2_norm_attention(self.deconv2_attention(x_attention)))
+        # # x_attention = F.pad(x_attention, (3, 3, 3, 3), 'reflect')
+        # # print(x_attention.size()) [1, 64, 256, 256]
+        # attention = self.deconv3_attention(x_attention)
+
+        attention = self.attention_model(x)
 
         softmax_ = torch.nn.Softmax(dim=1)
         attention = softmax_(attention)
